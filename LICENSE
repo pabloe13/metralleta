@@ -1,9 +1,10 @@
 This is free and unencumbered software released into the public domain.
 
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
+Anyone is free to copy, publish, use, or compile this software,
+either in source code form or as a compiled binary.
+Technically it could also be modified and distributed, but I
+choose to trust you, hopefully this is so simple that nobody
+would do it without my permission/credits.
 
 In jurisdictions that recognize copyright laws, the author or authors
 of this software dedicate any and all copyright interest in the
@@ -20,5 +21,12 @@ IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
 OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
+
+The author is not responsible for the consequences of using this code
+or its service. The author is not liable for the loss, damage, theft,
+or any type of compromise of user's data; the code is transparent and
+never requests user credentials, nor does it use usernames for any
+purpose other than displaying—in HTML format—the information that the
+user themselves downloaded and pasted or uploaded to the page.
 
 For more information, please refer to <https://unlicense.org>
