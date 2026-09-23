@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Comparador de Seguidores</title>
+  <style>
+    /* Blanco, negro y un solo toque de rojo. Suficiente y hasta mucho pa lo que sirve. */
+    :root {
+      color-scheme: light dark;
+      --bg: light-dark(#fafafa, #0b0b0c);
+      --card: light-dark(#fff, #141416);
+      --fg: light-dark(#111, #f2f2f2);
+      --mut: light-dark(#71717a, #8b8b93);
+      --line: light-dark(#e4e4e7, #27272a);
+      --red: #e5484d;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    body {
+      font: 16px/1.5 system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      max-width: 720px;
+      margin: auto;
+      padding: clamp(1.5rem, 6vw, 3.5rem) 1rem
+    }
+
+    h1 {
+      color: var(--fg);
+      font-size: clamp(1.6rem, 6vw, 2.2rem);
+      letter-spacing: -.03em
+    }
+
+    header {
+      margin-bottom: 2rem;
+      color: var(--mut)
+    }
+
+    .note {
+      font-size: .85rem;
+      margin-top: .75rem
+    }
+
+    details {
+      margin-top: .75rem
+    }
+
+    summary {
+      color: var(--fg);
+      cursor: pointer;
+      font-weight: 600
+    }
+
+    .up {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem
+    }
+
+    .zone {
+      position: relative;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      border: 1.5px dashed var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      cursor: pointer;
+      transition: border-color .2s
+    }
+
+    .zone>* {
+      pointer-events: none;
+      display: block
+    }
+
+    .zone:hover,
+    .zone.over,
+    .zone:focus-within {
+      border-color: var(--fg)
+    }
+
+    .zone.ok {
+      border-style: solid;
+      border-color: var(--fg)
+    }
+
+    .zone small,
+    .zone em {
+      color: var(--mut);
+      font-size: .85rem
+    }
+
+    .zone em {
+      font-style: normal;
+      margin-top: .75rem;
+      word-break: break-all
+    }
+
+    .zone.ok em {
+      color: var(--fg)
+    }
+
+    .zone input {
+      position: absolute;
+      opacity: 0
+    }
+
+    button,
+    #q {
+      font: inherit;
+      color: inherit;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: .7rem 1.1rem
+    }
+
+    button {
+      cursor: pointer;
+      transition: opacity .2s, border-color .2s
+    }
+
+    button:hover,
+    #q:focus {
+      border-color: var(--fg)
+    }
+
+    #q {
+      flex: 1;
+      min-width: 0;
+      outline: 0
+    }
+
+    #go {
+      width: 100%;
+      margin-bottom: 2rem;
+      font-weight: 600;
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg)
+    }
+
+    #go:hover {
+      opacity: .85
+    }
+
+    #go:disabled {
+      opacity: .5;
+      cursor: wait
+    }
+
+    #res {
+      animation: up .4s
+    }
+
+    @keyframes up {
+      from {
+        opacity: 0;
+        transform: translateY(12px)
+      }
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin-bottom: 1rem;
+      text-align: center;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden
+    }
+
+    .stats div {
+      padding: 1rem .5rem;
+      background: var(--card);
+      color: var(--mut);
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+
+    .stats b {
+      display: block;
+      color: var(--fg);
+      font-size: 2rem;
+      line-height: 1.2;
+      letter-spacing: -.03em
+    }
+
+    .stats div:last-child b {
+      color: var(--red)
+    }
+
+    .bar {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: .75rem
+    }
+
+    /* Las filas fuera de pantalla ni se dibujan: 5.000 culeros y ni se despeina porque soy gallo. */
+    #list {
+      display: grid;
+      gap: 1px;
+      max-height: 60vh;
+      overflow: auto;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 12px
+    }
+
+    #list a {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .9rem 1.1rem;
+      background: var(--card);
+      color: inherit;
+      font-weight: 600;
+      text-decoration: none;
+      content-visibility: auto;
+      contain-intrinsic-size: auto 3.3rem
+    }
+
+    #list a::after {
+      content: "ver perfil ↗";
+      color: var(--mut);
+      font-size: .8rem;
+      font-weight: 400;
+      white-space: nowrap
+    }
+
+    #list a:hover {
+      background: var(--bg)
+    }
+
+    #empty {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--mut)
+    }
+
+    #t {
+      position: fixed;
+      left: 50%;
+      bottom: 1.5rem;
+      translate: -50% 0;
+      max-width: 90vw;
+      padding: .7rem 1.2rem;
+      border-radius: 99px;
+      background: var(--fg);
+      color: var(--bg);
+      font-size: .9rem;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: .3s
+    }
+
+    #t.on {
+      opacity: 1;
+      translate: -50% -6px
+    }
+
+    #t.err {
+      background: var(--red);
+      color: #fff
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Comparador de Seguidores</h1>
+    <p class="intro">Todo se procesa localmente. Sin servidores ni riesgos, porque sinceramente tus datos no me
+      interesan 😊</p>
+    <p class="note">Si desconfias, puedes revisar el código fuente en mi GitHub, pedirmelo para que lo revises
+      personalmente
+      desde tu computadora con un IDE... o incluso bloc de notas... o copiarlo desde tu navegador para correrlo sin
+      internet porque es un html único... o no lo uses... o como querrás jajaj</p>
+    <p class="note">Si te gustó, compartilo con tus amigos y si querés, podés invitarme un cafecito en <a
+        href="https://www.buymeacoffee.com/preh13" target="_blank" rel="noopener">comprameuncaféporfa.com/preh13</a>
+      para que siga haciendo cositas curiosas y útiles💕 <br>(mentiras, no soy tan pobre ni voy a seguir haciendo ésto,
+      tampoco lo compartas mucho porque si la gente se pone a usarlo y les pasa algo luego a mí me van a chingar).</p>
+    <details>
+      <summary>Instrucciones</summary>
+      <p class="note">Básicamente debes descargar tu información en configuración -> Centro de cuentas de Instagram y
+        buscar algo que diga "tu información y permisos", exportar información, clic en crear, seleccionar tu cuenta,
+        exportar al dispositivo y quitar todas las selecciones para que sea más rápido (obviamente dejas solo la que
+        dice seguidores va), luego esperas unos minutos y la misma App te notifica para que la descargues a tu celular
+        (yo sinceramente prefiero descargarla y usarla en la compu pero como a vos te guste más dale :)<br><br>Si no me
+        entendiste nada porque a veces ni yo me entiendo, solo pedime el vídeo de cómo hacerlo para que no la regues y
+        luego me echés la culpa de que no sirve porque yo mismo lo hice y Claude Code dice que está weno.</p>
+    </details>
+  </header>
+  <main>
+    <div class="up">
+      <label class="zone"><b>1. Seguidores</b><small>followers.json</small><em>Arrastra el archivo o dale
+          clic</em><input type="file" accept=".json"></label>
+      <label class="zone"><b>2. Siguiendo</b><small>following.json</small><em>Arrastra el archivo o dale clic</em>
+        <input type="file" accept=".json">
+      </label>
+    </div>
+    <button id="go">Comparar</button>
+    <section id="res" hidden>
+      <div class="stats">
+        <div><b>0</b>Te siguen</div>
+        <div><b>0</b>Seguís</div>
+        <div><b>0</b>No te siguen</div>
+      </div>
+      <div class="bar"><input id="q" type="search" placeholder="Buscar usuario…"><button
+          id="copy">Copiar</button><button id="csv">CSV</button></div>
+      <div id="list"></div>
+      <p id="empty" hidden></p>
+    </section>
+  </main>
+  <div id="t" role="status"></div>
+  <script>
+    const $ = s => document.querySelector(s);
+    const $$ = s => [...document.querySelectorAll(s)];
+    const [go, q, list, empty, res, t] = ['#go', '#q', '#list', '#empty', '#res', '#t'].map($);
+    const files = [];   // [seguidores, siguiendo]
+    let bad = [];       // los culeros, ya ordenaditos
+    let timer;
+
+    // Aparece, opina y se va. Como ALGUNAS. ntt jajaj
+    const toast = (msg, err) => {
+      t.textContent = msg;
+      t.classList.toggle('err', !!err);
+      t.classList.add('on');
+      clearTimeout(timer);
+      timer = setTimeout(() => t.classList.remove('on'), 3000);
+    };
+    // Que el navegador no abra el JSON por su cuenta si sueltas el archivo fuera de la caja porque sé que mis amigos son... unicos.
+    window.ondragenter = window.ondragover = window.ondrop = e => e.preventDefault();
+    $$('.zone').forEach((zone, i) => {
+      const input = zone.querySelector('input'), name = zone.querySelector('em');
+      const take = f => {
+        if (!f) return;
+        if (!/\.json$/i.test(f.name)) return toast('Eso no es un .json, crack.', 1);
+        files[i] = f;
+        name.textContent = '✓ ' + f.name;
+        zone.classList.add('ok');
+      };
+      input.onchange = () => take(input.files[0]);
+      zone.ondragover = () => zone.classList.add('over');
+      zone.ondragleave = () => zone.classList.remove('over');
+      zone.ondrop = e => { zone.classList.remove('over'); take(e.dataTransfer.files[0]) };
+    });
+
+    const read = async f => {
+      try { return JSON.parse(await f.text()) }
+      catch { throw Error(`${f.name} no es un JSON válido. ¿Seguro que es el que te dio Instagram?`) }
+    };
+
+    // Instagram entrega los usuarios como se le ronca el culo: a veces en "value", a veces en un "href", pero quí los domamos a todos.
+    const norm = s => {
+      s = s.trim().toLowerCase();
+      if (s.includes('instagram.com')) s = (s.match(/instagram\.com\/(?:_u\/)?([^/?#]+)/) || [])[1] || '';
+      s = s.replace('@', '');
+      return /^[\w.]+$/.test(s) ? s : null;   // solo caracteres de usuario real: adiós basura (y adiós inyecciones)
+    };
+
+    // Excavamos el JSON hasta dar con los usuarios (gracias Claude).
+    const users = data => {
+      const out = new Set();
+      const walk = n => {
+        if (!n || typeof n !== 'object') return;
+        if (!Array.isArray(n))
+          for (const k of ['value', 'title', 'href']) {
+            const v = n[k];
+            if (typeof v === 'string' && (k !== 'href' || v.includes('instagram.com'))) {
+              const u = norm(v);
+              if (u) out.add(u);
+            }
+          }
+        Object.values(n).forEach(walk);
+      };
+      walk(data);
+      return [...out];
+    };
+
+    // La búsqueda solo esconde filas; no reconstruye nada, así que escribe sin miedo.
+    const filter = () => {
+      const s = q.value.trim().toLowerCase();
+      let n = 0;
+      for (const a of list.children) { a.hidden = !a.textContent.includes(s); n += !a.hidden }
+      list.hidden = !n;
+      empty.hidden = n > 0;
+      empty.textContent = bad.length ? 'Nadie se llama así...' : 'Todos te siguen de vuelta, kemosion';
+    };
+    q.oninput = filter;
+    go.onclick = async () => {
+      if (!files[0] || !files[1]) return toast('Faltan archivos. Subí los dos, sino cómo comparo???!', 1);
+      const label = go.textContent;
+      go.disabled = true;
+      go.textContent = 'Husmeando…';
+      try {
+        const [fans, follows] = (await Promise.all(files.map(read))).map(users);
+        if (!fans.length && !follows.length) throw Error('No encontré ni un usuario. ¿Seguro que no la cagaste y los pusiste donde debían?');
+        const fanSet = new Set(fans);
+        bad = follows.filter(u => !fanSet.has(u)).sort();   // a quienes sigues menos los que te siguen. Matemáticas.
+
+        $$('.stats b').forEach((b, i) => b.textContent = [fans, follows, bad][i].length.toLocaleString());
+        list.innerHTML = bad.map(u => `<a href="https://www.instagram.com/${u}" target="_blank" rel="noopener">@${u}</a>`).join('');
+        q.value = '';
+        filter();
+        res.hidden = false;
+        res.scrollIntoView({ behavior: 'smooth' });
+        toast('Listo. Aquí está, duele, pero dales en la nuca.');
+      } catch (e) {
+        toast(e.message, 1);
+      } finally {
+        go.disabled = false;
+        go.textContent = label;
+      }
+    };
+
+    $('#copy').onclick = async () => {
+      if (!bad.length) return toast('No hay a quién copiar. Milagro.');
+      try {
+        await navigator.clipboard.writeText(bad.map(u => '@' + u).join('\n'));
+        toast('Copiado. Ahora a decidir quién se queda.');
+      } catch {
+        toast('El navegador no me dejó copiar. Tocará a mano jeje.', 1);
+      }
+    };
+
+    $('#csv').onclick = () => {
+      if (!bad.length) return toast('No hay nada que exportar.');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(['Username,URL Perfil\n' + bad.map(u => `${u},https://www.instagram.com/${u}`).join('\n')], { type: 'text/csv' }));
+      a.download = 'instagram_no_me_siguen.csv';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      toast('CSV descargado.');
+    };
+  </script>
+  <footer style="margin:1rem 0 .5rem; font-size:.75rem; color:#94a3b8; text-align:center; letter-spacing:.04em;">
+    Hecho con ♡ por <strong style="color:#cbd5e1;">tu mejor amigo Pablo Roberto (preh13) (pablixxx) (papá)</strong>
+  </footer>
+  <p class="note"> <B>ADVERTENCIA:</B> NO ME HAGO RESPONSABLE DE ALGÚN MAL USO DE ESTA HERRAMIENTA, PÉRDIDA, DAÑO O
+    ROBO DE DATOS DESPUÉS DE USARLA PORQUE RECALCO: SI QUISIERA ROBAR TU INFORMACIÓN HUBIERA PUESTO UNA ESTRATEGIA DEL
+    TIPO "INGRESA TU CONTRASEÑA/MANDA TODA TU INFORMACIÓN". <BR> MUCHO MENOS QUE TE ENOJES CON TUS "AMIGOS" PORQUE NO TE
+    SIGUEN. ES TU PROBLEMA, NO EL MÍO.</p>
+</body>
+
+</html>
